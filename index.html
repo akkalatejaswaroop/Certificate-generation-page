@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Generator with Custom Background</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .admin-panel, .user-panel {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .admin-panel {
+            background-color: #f8f8f8;
+        }
+        .certificate {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #000;
+            margin-top: 20px;
+            position: relative;
+            padding: 40px;
+            box-sizing: border-box;
+            text-align: center;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .certificate-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .certificate-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 1;
+        }
+        .certificate-title {
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+        .certificate-text {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        .certificate-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 30px 0;
+        }
+        .certificate-event {
+            font-size: 20px;
+            margin: 20px 0;
+        }
+        .certificate-date {
+            margin-top: 40px;
+        }
+        input, button, select {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .password-container {
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .background-options {
+            margin-top: 15px;
+        }
+        .text-color-option {
+            margin-top: 15px;
+        }
+        #textColorPicker {
+            width: 50px;
+            height: 30px;
+            padding: 0;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Certificate Generator with Custom Background</h1>
+    
+    <!-- Admin Panel -->
+    <div class="admin-panel">
+        <h2>Admin Panel</h2>
+        <div id="passwordContainer">
+            <input type="password" id="adminPassword" placeholder="Admin Password">
+            <button id="loginBtn">Login</button>
+          <p> Enter password to login</p>
+        </div>
+        
+        <div id="adminControls" class="hidden">
+            <div class="form-group">
+                <label for="eventName">Event Name:</label>
+                <input type="text" id="eventName" placeholder="Enter event name">
+            </div>
+            
+            <div class="form-group">
+                <label for="certificateTitle">Certificate Title:</label>
+                <input type="text" id="certificateTitle" placeholder="Certificate of Participation">
+            </div>
+                    <div class="background-options">
+            <h3>Certificate Background</h3>
+            <div class="form-group">
+                <label for="backgroundType">Background Type:</label>
+                <select id="backgroundType">
+                    <option value="default">Default (Plain)</option>
+                    <option value="upload">Upload Custom Background</option>
+                    <option value="preset">Choose from Presets</option>
+                </select>
+            </div>
+            
+            <div id="uploadBackgroundContainer" class="hidden form-group">
+                <label for="backgroundUpload">Upload Background Image:</label>
+                <input type="file" id="backgroundUpload" accept="image/*">
+            </div>
+            
+            <div id="presetBackgroundContainer" class="hidden form-group">
+                <label for="presetBackground">Select Preset Background:</label>
+                <select id="presetBackground">
+                    <option value="gradients/blue">Blue Gradient</option>
+                    <option value="gradients/gold">Gold Certificate</option>
+                    <option value="gradients/elegant">Elegant Design</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="text-color-option">
+            <label for="textColorPicker">Text Color:</label>
+            <input type="color" id="textColorPicker" value="#000000">
+        </div>
+            <button id="updateEventBtn">Update Settings</button>
+        </div>
+    </div>
+    
+    <!-- User Panel -->
+    <div class="user-panel">
+        <h2>User Certificate Generator</h2>
+        <div class="form-group">
+            <label for="userName">Your Name:</label>
+            <input type="text" id="userName" placeholder="Enter your name">
+        </div>
+        
+
+        
+        <div class="form-group" style="margin-top: 20px;">
+            <button id="generateBtn">Generate Certificate</button>
+            <button id="downloadBtn" class="hidden">Download Certificate</button>
+        </div>
+    </div>
+    
+    <!-- Certificate Preview -->
+    <div id="certificateContainer" class="hidden">
+        <h2>Certificate Preview</h2>
+        <div id="certificate" class="certificate">
+            <div class="certificate-overlay"></div>
+            <div class="certificate-content">
+                <div class="certificate-title" id="certTitle">Certificate of Participation</div>
+                <div class="certificate-text">This certifies that</div>
+                <div class="certificate-name" id="certName">Name of Participant</div>
+                <div class="certificate-text">has successfully participated in</div>
+                <div class="certificate-event" id="certEvent">Event Name</div>
+                <div class="certificate-date" id="certDate">Date: May 4, 2025</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Default settings
+        let currentEventName = "Event Name";
+        let currentCertificateTitle = "Certificate of Participation";
+        let currentBackground = "";
+        let currentTextColor = "#000000";
+        
+        // Base64 encoded gradient images for presets
+        const presetBackgrounds = {
+            "gradients/blue": "linear-gradient(135deg, #6e8efb, #a777e3)",
+            "gradients/gold": "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
+            "gradients/elegant": "linear-gradient(to right, #d4d3dd, #efefbb)"
+        };
+        
+        // DOM elements
+        const loginBtn = document.getElementById('loginBtn');
+        const adminPassword = document.getElementById('adminPassword');
+        const adminControls = document.getElementById('adminControls');
+        const eventNameInput = document.getElementById('eventName');
+        const certificateTitleInput = document.getElementById('certificateTitle');
+        const updateEventBtn = document.getElementById('updateEventBtn');
+        const userNameInput = document.getElementById('userName');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const certificateContainer = document.getElementById('certificateContainer');
+        const certificate = document.getElementById('certificate');
+        const certTitle = document.getElementById('certTitle');
+        const certName = document.getElementById('certName');
+        const certEvent = document.getElementById('certEvent');
+        const backgroundTypeSelect = document.getElementById('backgroundType');
+        const uploadBackgroundContainer = document.getElementById('uploadBackgroundContainer');
+        const presetBackgroundContainer = document.getElementById('presetBackgroundContainer');
+        const backgroundUpload = document.getElementById('backgroundUpload');
+        const presetBackground = document.getElementById('presetBackground');
+        const textColorPicker = document.getElementById('textColorPicker');
+        
+        // Admin login
+        loginBtn.addEventListener('click', function() {
+            if (adminPassword.value === "admin123") {
+                adminControls.classList.remove('hidden');
+                alert("Login successful!");
+            } else {
+                alert("Incorrect password!");
+            }
+        });
+        
+        // Update event settings
+        updateEventBtn.addEventListener('click', function() {
+            const newEventName = eventNameInput.value.trim();
+            const newCertificateTitle = certificateTitleInput.value.trim();
+            
+            if (newEventName !== "") {
+                currentEventName = newEventName;
+                certEvent.textContent = currentEventName;
+            }
+            
+            if (newCertificateTitle !== "") {
+                currentCertificateTitle = newCertificateTitle;
+                certTitle.textContent = currentCertificateTitle;
+            }
+            
+            alert("Certificate settings updated successfully!");
+        });
+        
+        // Handle background type selection
+        backgroundTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // Hide all background option containers
+            uploadBackgroundContainer.classList.add('hidden');
+            presetBackgroundContainer.classList.add('hidden');
+            
+            // Show the relevant container based on selection
+            if (selectedType === 'upload') {
+                uploadBackgroundContainer.classList.remove('hidden');
+            } else if (selectedType === 'preset') {
+                presetBackgroundContainer.classList.remove('hidden');
+            }
+        });
+        
+        // Handle text color changes
+        textColorPicker.addEventListener('input', function() {
+            currentTextColor = this.value;
+            updateCertificateTextColor();
+        });
+        
+        // Update certificate text color
+        function updateCertificateTextColor() {
+            const certificateContent = document.querySelector('.certificate-content');
+            certificateContent.style.color = currentTextColor;
+        }
+        
+        // Generate certificate
+        generateBtn.addEventListener('click', function() {
+            const userName = userNameInput.value;
+            if (userName.trim() === "") {
+                alert("Please enter your name.");
+                return;
+            }
+            
+            // Set certificate data
+            certName.textContent = userName;
+            certEvent.textContent = currentEventName;
+            certTitle.textContent = currentCertificateTitle;
+            
+            // Apply text color
+            updateCertificateTextColor();
+            
+            // Apply background based on selection
+            const backgroundType = backgroundTypeSelect.value;
+            
+            if (backgroundType === 'upload') {
+                const fileInput = backgroundUpload;
+                if (fileInput.files && fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        certificate.style.backgroundImage = `url(${e.target.result})`;
+                        currentBackground = e.target.result;
+                    };
+                    reader.readAsDataURL(fileInput.files[0]);
+                } else {
+                    alert("Please select a background image to upload.");
+                    return;
+                }
+            } else if (backgroundType === 'preset') {
+                const selectedPreset = presetBackground.value;
+                certificate.style.backgroundImage = presetBackgrounds[selectedPreset];
+                currentBackground = presetBackgrounds[selectedPreset];
+            } else {
+                // Default background (white)
+                certificate.style.backgroundImage = 'none';
+                certificate.style.backgroundColor = '#ffffff';
+                currentBackground = 'none';
+            }
+            
+            // Show certificate and download button
+            certificateContainer.classList.remove('hidden');
+            downloadBtn.classList.remove('hidden');
+        });
+        
+        // Download certificate
+        downloadBtn.addEventListener('click', function() {
+            const userName = userNameInput.value;
+            const sanitizedUserName = userName.replace(/\s+/g, '_');
+            const backgroundStyle = currentBackground.startsWith('data:') ? 
+                `background-image: url(${currentBackground});` : 
+                (currentBackground.startsWith('linear-gradient') ? 
+                    `background-image: ${currentBackground};` : 
+                    `background-color: #ffffff;`);
+            
+            // Create a container for the certificate content
+            const content = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Certificate - ${userName}</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 40px;
+                        }
+                        .certificate {
+                            width: 100%;
+                            height: 100vh;
+                            padding: 40px;
+                            box-sizing: border-box;
+                            text-align: center;
+                            border: 1px solid #000;
+                            position: relative;
+                            ${backgroundStyle}
+                            background-size: cover;
+                            background-position: center;
+                            background-repeat: no-repeat;
+                        }
+                        .certificate-overlay {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background-color: rgba(255, 255, 255, 0.7);
+                            z-index: 1;
+                        }
+                        .certificate-content {
+                            position: relative;
+                            z-index: 2;
+                            height: 100%;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                            color: ${currentTextColor};
+                        }
+                        .certificate-title {
+                            font-size: 24px;
+                            margin-bottom: 30px;
+                            text-transform: uppercase;
+                        }
+                        .certificate-text {
+                            font-size: 18px;
+                            line-height: 1.6;
+                        }
+                        .certificate-name {
+                            font-size: 28px;
+                            font-weight: bold;
+                            margin: 30px 0;
+                        }
+                        .certificate-event {
+                            font-size: 20px;
+                            margin: 20px 0;
+                        }
+                        .certificate-date {
+                            margin-top: 40px;
+                        }
+                        @media print {
+                            body {
+                                padding: 0;
+                            }
+                            .certificate {
+                                border: none;
+                                height: 100vh;
+                                width: 100vw;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="certificate">
+                        <div class="certificate-overlay"></div>
+                        <div class="certificate-content">
+                            <div class="certificate-title">${currentCertificateTitle}</div>
+                            <div class="certificate-text">This certifies that</div>
+                            <div class="certificate-name">${userName}</div>
+                            <div class="certificate-text">has successfully participated in</div>
+                            <div class="certificate-event">${currentEventName}</div>
+                            <div class="certificate-date">Date: May 4, 2025</div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // Create a Blob with the HTML content
+            const blob = new Blob([content], { type: 'text/html' });
+            
+            // Create a download link
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `certificate_${sanitizedUserName}.html`;
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+</body>
+</html>
